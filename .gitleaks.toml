@@ -1,0 +1,6 @@
+title = "Cafe monorepo secret scanning"
+
+[extend]
+useDefault = true
+
+# Keep findings visible; do not allowlist broad paths or generic token patterns.

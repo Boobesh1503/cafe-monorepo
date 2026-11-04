@@ -1,0 +1,13 @@
+# Generated lockfiles and build outputs
+pnpm-lock.yaml
+apps/mobile/pubspec.lock
+**/.next/
+**/dist/
+apps/mobile/.dart_tool/
+apps/mobile/build/
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/web/
+
+# Approved input documents are not scaffold outputs
+.azure/project-plan.md
