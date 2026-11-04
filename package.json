@@ -15,6 +15,14 @@
     "test": "corepack pnpm -r --if-present test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "secrets:generate:dev": "node scripts/generate-dev-secrets.mjs",
+    "infra:up": "docker compose --env-file apps/api/.env -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose --env-file apps/api/.env -f infra/docker-compose.yml down",
+    "db:generate": "corepack pnpm --filter @cafe/api db:generate",
+    "db:migrate": "corepack pnpm --filter @cafe/api db:migrate",
+    "db:deploy": "corepack pnpm --filter @cafe/api db:deploy",
+    "db:status": "corepack pnpm --filter @cafe/api db:status",
+    "db:studio": "corepack pnpm --filter @cafe/api db:studio",
     "secrets:check": "gitleaks detect --source . --config .gitleaks.toml --no-git"
   },
   "devDependencies": {

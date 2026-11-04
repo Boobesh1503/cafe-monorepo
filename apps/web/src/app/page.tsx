@@ -3,6 +3,8 @@ import { MenuSection } from '@/components/menu-section';
 import { SiteHeader } from '@/components/site-header';
 import { getMenuForDisplay } from '@/api';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const menu = await getMenuForDisplay();
 

@@ -22,23 +22,29 @@ export function MenuSection({ items }: { items: MenuItem[] }) {
           here, with ingredients we feel good about.
         </p>
       </div>
-      <div className="menu-grid">
-        {items.map((item, index) => (
-          <article className={`menu-card menu-card-${index + 1}`} key={item.id}>
-            <div className="menu-card-top">
-              <span className="menu-number">0{index + 1}</span>
-              <span className="menu-category">{item.category}</span>
-            </div>
-            <h3>{item.name}</h3>
-            <p>{item.description}</p>
-            <div className="menu-card-bottom">
-              <span>{item.tags[0] ?? 'made with care'}</span>
-              <strong>{formatPrice(item.priceCents)}</strong>
-            </div>
-          </article>
-        ))}
-      </div>
-      <p className="menu-note">A little different every day. Ask us what’s fresh.</p>
+      {items.length > 0 ? (
+        <div className="menu-grid">
+          {items.map((item, index) => (
+            <article className={`menu-card menu-card-${index + 1}`} key={item.id}>
+              <div className="menu-card-top">
+                <span className="menu-number">0{index + 1}</span>
+                <span className="menu-category">{item.category}</span>
+              </div>
+              <h3>{item.name}</h3>
+              <p>{item.description}</p>
+              <div className="menu-card-bottom">
+                <span>{item.tags[0] ?? 'made with care'}</span>
+                <strong>{formatPrice(item.priceCents)}</strong>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="menu-note">Our menu is being prepared. Please check back soon.</p>
+      )}
+      {items.length > 0 && (
+        <p className="menu-note">A little different every day. Ask us what’s fresh.</p>
+      )}
     </section>
   );
 }

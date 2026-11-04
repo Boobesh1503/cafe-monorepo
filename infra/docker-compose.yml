@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cafe
+      POSTGRES_USER: ${POSTGRES_BOOTSTRAP_USER:-cafe_bootstrap}
+      POSTGRES_PASSWORD: ${POSTGRES_BOOTSTRAP_PASSWORD:?Set POSTGRES_BOOTSTRAP_PASSWORD in apps/api/.env}
+      DATABASE_MIGRATOR_PASSWORD: ${DATABASE_MIGRATOR_PASSWORD:?Set DATABASE_MIGRATOR_PASSWORD in apps/api/.env}
+      DATABASE_APP_PASSWORD: ${DATABASE_APP_PASSWORD:?Set DATABASE_APP_PASSWORD in apps/api/.env}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - cafe-internal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d cafe']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in apps/api/.env}
+    command:
+      - sh
+      - -c
+      - |
+        case "$${REDIS_PASSWORD}" in
+          REPLACE_*|"") echo "Generate Redis credentials before starting the cache." >&2; exit 1 ;;
+        esac
+        if [ "$${#REDIS_PASSWORD}" -lt 32 ]; then echo "Redis credentials must be at least 32 characters." >&2; exit 1; fi
+        umask 077
+        printf 'user default on >%s ~* +@all\n' "$${REDIS_PASSWORD}" > /tmp/redis-users.acl
+        exec redis-server --appendonly yes --aclfile /tmp/redis-users.acl
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - cafe-internal
+    healthcheck:
+      test: ['CMD-SHELL', 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  cafe-internal:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
