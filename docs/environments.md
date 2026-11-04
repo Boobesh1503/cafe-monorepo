@@ -6,15 +6,20 @@
 | Staging           | `.env.staging.example`     | Inventory of non-production settings; reserved hostnames |
 | Production        | `.env.production.example`  | Inventory of production settings; reserved hostnames     |
 
-Copy `apps/api/.env.example` to the ignored `apps/api/.env`; copy the web/admin
-examples to the respective `.env.local` files in those app folders. The root
-`.env.example` and profile templates are configuration inventories and are not
-loaded automatically. Staging/production templates contain no credentials and
-are not deployment instructions. A future environment must supply its real
-values through an approved configuration store, validate origins and URLs, and
-avoid reusing development data. Never commit `.env`, secrets, or customer data.
+Generate local credentials with `corepack pnpm secrets:generate:dev`, copy
+`apps/api/.env.example` to the ignored `apps/api/.env`, and paste the generated
+values into that private file. Docker Compose and the API read it. Copy the
+web/admin examples to the respective `.env.local` files in those app folders.
+The root `.env.example` and profile templates are configuration inventories
+and are not loaded automatically. Staging/production templates contain no
+credentials and are not deployment instructions.
 
-The API reads `NODE_ENV`, `API_PORT`, and `API_CORS_ORIGINS`. The public web app
-reads `NEXT_PUBLIC_API_BASE_URL` at build/runtime. The API currently uses
-in-memory/static menu content and has no database or migration requirement in
-Phase 1.
+The API validates `NODE_ENV`, `API_PORT`, `API_CORS_ORIGINS`, `DATABASE_URL`,
+`DIRECT_URL`, `SHADOW_DATABASE_URL`, `REDIS_URL`, and `CACHE_TTL_SECONDS` with Zod. Production mode
+requires TLS-protected PostgreSQL URLs, TLS-protected Redis, non-local hosts,
+and generated credentials of at least 32 characters. The public web app reads
+`NEXT_PUBLIC_API_BASE_URL` at build/runtime.
+
+For production, inject values from an approved managed secret service at
+runtime. Do not copy development credentials or data. Never commit `.env`,
+secrets, or customer data.
