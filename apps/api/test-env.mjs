@@ -7,3 +7,5 @@ process.env.SHADOW_DATABASE_URL =
   'postgresql://cafe_migrator:test-migrator-password-with-32chars@localhost:5432/cafe_shadow?schema=public';
 process.env.REDIS_URL = 'redis://:test-redis-password-with-32-characters@localhost:6379';
 process.env.API_CORS_ORIGINS = 'http://localhost:3000,http://localhost:3001';
+process.env.JWT_ACCESS_SECRET = 'test-jwt-access-secret-32-chars-long-minimum-length';
+process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret-32-chars-long-minimum-length';

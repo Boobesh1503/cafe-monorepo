@@ -3,9 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
@@ -16,16 +16,212 @@ enum MenuCategory {
   seasonal
 }
 
+enum UserRole {
+  CUSTOMER
+  STAFF
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum TokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum SubscriptionPlan {
+  FREE_TRIAL
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum TenantMemberRole {
+  OWNER
+  MANAGER
+  KITCHEN_STAFF
+  CASHIER
+  WAITER
+}
+
+enum MemberStatus {
+  INVITED
+  ACTIVE
+  INACTIVE
+}
+
+model Tenant {
+  id                    String           @id @default(cuid())
+  slug                  String           @unique @db.VarChar(63)
+  name                  String           @db.VarChar(120)
+  status                TenantStatus     @default(TRIAL)
+  subscriptionPlan      SubscriptionPlan @default(FREE_TRIAL)
+  subscriptionExpiresAt DateTime?
+  branding              Json             @default("{}")
+  settings              Json             @default("{}")
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  branches    Branch[]
+  memberships TenantMembership[]
+  auditLogs   AuditLog[]
+  menuItems   MenuItem[]
+
+  @@index([status])
+  @@index([slug])
+}
+
+model Branch {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String   @db.VarChar(120)
+  code         String   @db.VarChar(30)
+  phone        String?  @db.VarChar(30)
+  email        String?  @db.VarChar(255)
+  address      String   @db.VarChar(255)
+  city         String   @db.VarChar(100)
+  state        String   @db.VarChar(100)
+  postalCode   String   @db.VarChar(20)
+  isActive     Boolean  @default(true)
+  openingHours Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  staffAssignments BranchStaffAssignment[]
+  menuItems        MenuItem[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, isActive])
+}
+
+model TenantMembership {
+  id        String           @id @default(cuid())
+  tenantId  String
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      TenantMemberRole @default(MANAGER)
+  status    MemberStatus     @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  branchAssignments BranchStaffAssignment[]
+
+  @@unique([tenantId, userId])
+  @@index([tenantId, role])
+  @@index([userId])
+}
+
+model BranchStaffAssignment {
+  id           String           @id @default(cuid())
+  membershipId String
+  membership   TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  branchId     String
+  branch       Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  isPrimary    Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+
+  @@unique([membershipId, branchId])
+  @@index([branchId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   @db.VarChar(100)
+  entity    String   @db.VarChar(60)
+  entityId  String?  @db.VarChar(100)
+  metadata  Json?
+  ipAddress String?  @db.VarChar(45)
+  userAgent String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, action])
+}
+
 model MenuItem {
-  id          String       @id @default(cuid())
-  name        String       @db.VarChar(120)
-  description String       @db.VarChar(500)
-  priceCents  Int
-  category    MenuCategory
-  tags        String[]     @default([])
-  available   Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id              String        @id @default(cuid())
+  tenantId        String?
+  tenant          Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId        String?
+  branch          Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  name            String        @db.VarChar(120)
+  description     String        @db.VarChar(500)
+  priceCents      Int
+  category        MenuCategory  @default(coffee)
+  categorySlug    String        @default("beverages") @db.VarChar(50)
+  categoryName    String        @default("Beverages") @db.VarChar(100)
+  imageUrl        String?       @db.VarChar(500)
+  isVeg           Boolean       @default(true)
+  isBestseller    Boolean       @default(false)
+  variants        Json          @default("[]")
+  addOns          Json          @default("[]")
+  prepTimeMinutes Int           @default(15)
+  tags            String[]      @default([])
+  available       Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([available, createdAt])
+  @@index([tenantId, available, createdAt])
+  @@index([tenantId, categorySlug])
+}
+
+model User {
+  id                  String              @id @default(cuid())
+  email               String              @unique @db.VarChar(255)
+  passwordHash        String              @db.VarChar(255)
+  name                String              @db.VarChar(100)
+  role                UserRole            @default(CUSTOMER)
+  isEmailVerified     Boolean             @default(false)
+  mfaEnabled          Boolean             @default(false)
+  mfaSecret           String?             @db.VarChar(255)
+  failedLoginAttempts Int                 @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  sessions            Session[]
+  verificationTokens  VerificationToken[]
+  memberships         TenantMembership[]
+  auditLogs           AuditLog[]
+
+  @@index([role])
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique @db.VarChar(128)
+  deviceInfo String?   @db.VarChar(255)
+  ipAddress  String?   @db.VarChar(45)
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, revokedAt])
+}
+
+model VerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @db.VarChar(128)
+  type      TokenType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, type, usedAt])
 }

@@ -1,6 +1,8 @@
 import type { MenuItem } from '@cafe/shared';
-import { cacheMenu, checkCache, getCachedMenu } from './cache.js';
-import { checkDatabase, getAvailableMenu } from './database.js';
+import type { PrismaClient } from '@prisma/client';
+import type { Redis } from 'ioredis';
+import { cacheMenu, checkCache, getCachedMenu, redis } from './cache.js';
+import { checkDatabase, getAvailableMenu, prisma } from './database.js';
 
 export interface ApiDependencies {
   checkDatabase: () => Promise<void>;
@@ -8,6 +10,8 @@ export interface ApiDependencies {
   getCachedMenu: () => Promise<MenuItem[] | null>;
   cacheMenu: (items: MenuItem[]) => Promise<void>;
   getAvailableMenu: () => Promise<MenuItem[]>;
+  redisClient?: Redis | null;
+  prismaClient?: PrismaClient;
 }
 
 export const apiDependencies: ApiDependencies = {
@@ -16,4 +20,6 @@ export const apiDependencies: ApiDependencies = {
   getCachedMenu,
   cacheMenu,
   getAvailableMenu,
+  redisClient: redis,
+  prismaClient: prisma,
 };

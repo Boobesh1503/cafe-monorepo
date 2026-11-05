@@ -5,6 +5,8 @@ const bootstrapPassword = secret();
 const migratorPassword = secret();
 const appPassword = secret();
 const redisPassword = secret();
+const jwtAccessSecret = secret();
+const jwtRefreshSecret = secret();
 
 console.log(`NODE_ENV=development
 API_PORT=4000
@@ -19,4 +21,6 @@ DATABASE_MIGRATOR_PASSWORD=${migratorPassword}
 DATABASE_APP_PASSWORD=${appPassword}
 REDIS_PASSWORD=${redisPassword}
 CACHE_TTL_SECONDS=300
+JWT_ACCESS_SECRET=${jwtAccessSecret}
+JWT_REFRESH_SECRET=${jwtRefreshSecret}
 `);

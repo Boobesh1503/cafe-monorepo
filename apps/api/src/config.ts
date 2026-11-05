@@ -50,6 +50,14 @@ const configSchema = z.object({
   SHADOW_DATABASE_URL: databaseUrlForRole('cafe_migrator'),
   REDIS_URL: secretUrl(redisUrlSchema),
   CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(300),
+  JWT_ACCESS_SECRET: z.string().min(32).default('cafe-default-jwt-access-secret-32-chars-long-minimum'),
+  JWT_REFRESH_SECRET: z.string().min(32).default('cafe-default-jwt-refresh-secret-32-chars-long-minimum'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_SECURE: z.coerce.boolean().default(false),
+  EMAIL_FROM: z.string().default('Foodie Café <noreply@foodiecafe.com>'),
 });
 
 const isLocalHost = (hostname: string) =>
